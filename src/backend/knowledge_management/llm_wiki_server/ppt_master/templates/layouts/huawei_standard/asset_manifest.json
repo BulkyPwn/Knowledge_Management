@@ -1,0 +1,11 @@
+{
+  "default_cover": "cover-explore.png",
+  "assets": {
+    "cover-explore.png": "Default cover: exploration, ambition, and open landscape",
+    "cover-intelligence.jpeg": "Alternative cover: human-machine intelligence",
+    "cover-climb.jpg": "Alternative cover: execution, teamwork, and challenge",
+    "cover-lighthouse.jpeg": "Alternative cover: technology, connection, and future",
+    "brand-logo.png": "Large transparent Huawei logo for cover and ending pages",
+    "brand-logo-small.png": "Compact transparent Huawei logo for content-page footer"
+  }
+}

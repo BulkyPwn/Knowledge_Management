@@ -1,0 +1,4 @@
+[submodule "third_party/llm_wiki"]
+	path = third_party/llm_wiki
+	url = https://github.com/BulkyPwn/llm_wiki.git
+	branch = main

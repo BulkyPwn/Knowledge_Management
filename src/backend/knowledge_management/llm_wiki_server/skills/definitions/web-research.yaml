@@ -1,0 +1,71 @@
+# 网络调研 Skill（结构化引擎版本）
+# 强制执行搜索 → 筛选 → 抓取 → 生成报告的工作流
+
+name: 网络调研
+version: "1.0"
+type: structured
+description: 搜索互联网获取最新信息，自动抓取关键页面，整理成结构化报告
+trigger_keywords: ["搜索", "网上查", "最新", "调研", "web", "internet", "google", "新闻", "research"]
+tools_allowed: [web_search, fetch_url]
+max_iterations: 6
+
+steps:
+  # ═══ 步骤 1：网络搜索 ═══
+  - id: web_search
+    type: tool_call
+    tool: web_search
+    params:
+      query: "{{user_input}}"
+      max_results: 8
+    validate:
+      condition: "result.count > 0"
+      on_failure: retry_with_alternate
+    retry:
+      max_attempts: 2
+      alternate_params:
+        - {query: "{{user_input}} 最新 2025", max_results: 5}
+
+  # ═══ 步骤 2：深度抓取 — 选取前 3 个结果获取全文 ═══
+  - id: fetch_deep
+    type: tool_call
+    tool: fetch_url
+    params:
+      url: "{{step.web_search.result.results[0].url}}"
+    condition: "step.web_search.result.count > 0"
+    validate:
+      condition: "result.length > 100"
+      on_failure: continue_anyway
+
+  # ═══ 步骤 3：生成调研报告 ═══
+  - id: generate_report
+    type: llm_generate
+    instructions: |
+      你是网络调研分析师。基于以下搜索结果生成结构化调研报告。
+
+      用户调研需求：{{user_input}}
+
+      搜索结果：
+      {{step_raw.web_search}}
+
+      深度抓取的第1条结果：
+      {{step_raw.fetch_deep}}
+
+      报告格式要求：
+      ## 调研主题
+      [一句话概括]
+
+      ## 关键发现
+      - 发现1：[内容] — 来源：[URL]
+      - 发现2：[内容] — 来源：[URL]
+
+      ## 信息来源
+      - [来源标题](URL)
+
+      ## 局限说明
+      - 信息时效性说明
+      - 未覆盖的方面
+    temperature: 0.3
+    max_tokens: 4096
+    validate:
+      contains: "来源"
+      min_length: 200

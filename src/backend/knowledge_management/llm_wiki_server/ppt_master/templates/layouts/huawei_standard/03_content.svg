@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720">
+  <rect width="1280" height="720" fill="#FFFFFF"/>
+  <rect x="0" y="0" width="1280" height="7" fill="#C7000B"/>
+  <rect x="52" y="38" width="8" height="42" fill="#C7000B"/>
+  <text x="80" y="71" fill="#1D1D1B" font-family="Microsoft YaHei, Arial, sans-serif" font-size="32" font-weight="bold">{{PAGE_TITLE}}</text>
+  <text x="80" y="104" fill="#666666" font-family="Microsoft YaHei, Arial, sans-serif" font-size="16">{{KEY_MESSAGE}}</text>
+  <line x1="52" y1="125" x2="1228" y2="125" stroke="#DDDDDD"/>
+  <rect x="52" y="148" width="1176" height="486" fill="#FFFFFF" stroke="#DDDDDD" stroke-dasharray="7 5"/>
+  <text x="640" y="398" text-anchor="middle" fill="#C4C4C4" font-family="Microsoft YaHei, Arial, sans-serif" font-size="18">{{CONTENT_AREA}}</text>
+  <line x1="52" y1="662" x2="1228" y2="662" stroke="#DDDDDD"/>
+  <text x="52" y="692" fill="#898989" font-family="Microsoft YaHei, Arial, sans-serif" font-size="12">{{SOURCE}}</text>
+  <image href="images/brand-logo-small.png" x="1030" y="674" width="118" height="26" preserveAspectRatio="xMaxYMid meet"/>
+  <text x="1218" y="694" text-anchor="end" fill="#666666" font-family="Arial, sans-serif" font-size="14">{{PAGE_NUM}}</text>
+</svg>

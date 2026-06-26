@@ -1,0 +1,52 @@
+# 内容摘要 Skill（结构化引擎版本）
+# 强制执行知识库检索 → 摘要生成 → 格式验证的工作流
+
+name: 内容摘要
+version: "1.0"
+type: structured
+description: 对知识库内容或网页内容进行智能摘要，提取关键信息
+trigger_keywords: ["摘要", "总结", "概括", "归纳", "summarize", "summary", "提炼"]
+tools_allowed: [knowledge_query, fetch_url, list_projects]
+max_iterations: 5
+
+steps:
+  # ═══ 步骤 1：知识库检索 ═══
+  - id: kb_lookup
+    type: tool_call
+    tool: knowledge_query
+    params:
+      query: "{{user_input}}"
+      top_k: 5
+    validate:
+      condition: "result.count > 0"
+      on_failure: continue_anyway
+
+  # ═══ 步骤 2：生成摘要 ═══
+  - id: generate_summary
+    type: llm_generate
+    instructions: |
+      你是内容摘要专家。对以下内容进行结构化摘要。
+
+      用户需求：{{user_input}}
+
+      检索到的知识库内容：
+      {{step_raw.kb_lookup}}
+
+      摘要要求：
+      ## 核心要点
+      - 列出 3-5 个核心要点（每条 1-2 句话）
+
+      ## 关键数据
+      - 提取关键数字、日期、名称
+
+      ## 来源清单
+      - 每条信息标注来源 [来源: xxx]
+
+      ## 摘要说明
+      - 摘要的字数限制
+      - 未覆盖的内容
+    temperature: 0.2
+    max_tokens: 4096
+    validate:
+      contains: "来源"
+      min_length: 100

@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KMA Server - 管理控制台</title>
+<style>
+  :root {
+    --bg: #f5f6fa;
+    --card-bg: #ffffff;
+    --border: #e2e5ee;
+    --text: #2d3436;
+    --text-muted: #636e72;
+    --primary: #6c5ce7;
+    --primary-hover: #5a4bd1;
+    --danger: #e74c3c;
+    --danger-hover: #c0392b;
+    --success: #27ae60;
+    --warning: #f39c12;
+    --radius: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); line-height:1.5; }
+
+  .header { background: var(--card-bg); border-bottom: 1px solid var(--border); padding: 0 24px; height: 56px; display:flex; align-items:center; justify-content:space-between; }
+  .header h1 { font-size:18px; font-weight:600; }
+  .header .status { font-size:12px; color: var(--text-muted); }
+  .header .status .dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:6px; }
+  .header .status .dot.ok { background: var(--success); }
+  .header .status .dot.err { background: var(--danger); }
+
+  .nav { background: var(--card-bg); border-bottom: 1px solid var(--border); padding: 0 24px; display:flex; gap:0; }
+  .nav button { background:none; border:none; padding:12px 20px; font-size:14px; cursor:pointer; color: var(--text-muted); border-bottom:2px solid transparent; transition: all 0.15s; }
+  .nav button:hover { color: var(--text); }
+  .nav button.active { color: var(--primary); border-bottom-color: var(--primary); font-weight:600; }
+
+  .container { max-width:1100px; margin:0 auto; padding:24px; }
+
+  .card { background: var(--card-bg); border-radius: var(--radius); box-shadow: var(--shadow); border: 1px solid var(--border); padding:20px; margin-bottom:20px; }
+  .card h3 { font-size:15px; margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid var(--border); }
+
+  .form-row { display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; margin-bottom:12px; }
+  .form-group { display:flex; flex-direction:column; gap:4px; flex:1; min-width:180px; }
+  .form-group label { font-size:12px; font-weight:600; color: var(--text-muted); text-transform:uppercase; }
+  .form-group input, .form-group select { padding:8px 12px; border:1px solid var(--border); border-radius:6px; font-size:13px; outline:none; transition:border-color 0.15s; }
+  .form-group input:focus, .form-group select:focus { border-color: var(--primary); }
+
+  .btn { padding:8px 16px; border:none; border-radius:6px; font-size:13px; cursor:pointer; font-weight:600; transition:all 0.15s; white-space:nowrap; }
+  .btn-primary { background: var(--primary); color:#fff; }
+  .btn-primary:hover { background: var(--primary-hover); }
+  .btn-danger { background: var(--danger); color:#fff; }
+  .btn-danger:hover { background: var(--danger-hover); }
+  .btn-outline { background:transparent; border:1px solid var(--border); color: var(--text); }
+  .btn-outline:hover { background: var(--bg); }
+  .btn-sm { padding:4px 10px; font-size:12px; }
+  .btn:disabled { opacity:0.5; cursor:not-allowed; }
+
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th { text-align:left; padding:8px 12px; background: var(--bg); font-weight:600; color: var(--text-muted); font-size:11px; text-transform:uppercase; }
+  td { padding:8px 12px; border-bottom:1px solid var(--border); }
+  tr:hover td { background: #f9f9fd; }
+  .mono { font-family: 'SF Mono', 'Consolas', monospace; font-size:12px; }
+
+  .alert { padding:10px 14px; border-radius:6px; font-size:13px; margin-bottom:12px; }
+  .alert-info { background: #e8f4fd; color: #0c5460; border:1px solid #bee5eb; }
+  .alert-error { background: #fde8e8; color: #721c24; border:1px solid #f5c6cb; }
+  .alert-success { background: #e8f5e9; color: #155724; border:1px solid #c3e6cb; }
+
+  .empty { text-align:center; padding:40px 20px; color: var(--text-muted); }
+
+  .loading { display:inline-block; width:16px; height:16px; border:2px solid var(--border); border-top-color: var(--primary); border-radius:50%; animation:spin 0.6s linear infinite; margin-right:8px; vertical-align:middle; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  .tab-content { display:none; }
+  .tab-content.active { display:block; }
+
+  .file-tree { font-family: 'SF Mono', 'Consolas', monospace; font-size:12px; }
+  .file-tree .dir { color: var(--primary); cursor:pointer; }
+  .file-tree .dir:hover { text-decoration:underline; }
+  .file-tree .file { color: var(--text); padding-left:20px; }
+  .file-tree .actions { display:inline-flex; gap:6px; margin-left:12px; }
+
+  .breadcrumb { font-size:12px; color: var(--text-muted); margin-bottom:12px; }
+  .breadcrumb a { color: var(--primary); cursor:pointer; text-decoration:none; }
+  .breadcrumb a:hover { text-decoration:underline; }
+
+  .modal-overlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); z-index:1000; justify-content:center; align-items:center; }
+  .modal-overlay.show { display:flex; }
+  .modal { background: var(--card-bg); border-radius:12px; width:640px; max-height:480px; display:flex; flex-direction:column; box-shadow:0 8px 32px rgba(0,0,0,0.2); }
+  .modal-header { display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-bottom:1px solid var(--border); }
+  .modal-header h3 { margin:0; font-size:15px; }
+  .modal-header .close-btn { background:none; border:none; font-size:20px; cursor:pointer; color:var(--text-muted); line-height:1; }
+  .modal-header .close-btn:hover { color:var(--text); }
+  .modal-path { padding:8px 20px; background:var(--bg); font-family:'SF Mono','Consolas',monospace; font-size:12px; color:var(--text-muted); border-bottom:1px solid var(--border); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .modal-body { flex:1; overflow-y:auto; padding:8px 0; }
+  .modal-body .entry { display:flex; align-items:center; padding:6px 20px; cursor:pointer; font-size:13px; }
+  .modal-body .entry:hover { background: #f0edff; }
+  .modal-body .entry .icon { width:20px; margin-right:8px; font-size:14px; }
+  .modal-body .entry.loading-entry { color: var(--text-muted); cursor:default; }
+  .modal-body .entry.loading-entry:hover { background:transparent; }
+  .modal-footer { display:flex; justify-content:flex-end; gap:8px; padding:12px 20px; border-top:1px solid var(--border); }
+  .input-with-btn { display:flex; gap:6px; align-items:flex-end; }
+  .input-with-btn input { flex:1; }
+  .browse-btn { padding:8px 12px; border:1px solid var(--border); border-radius:6px; background: var(--bg); cursor:pointer; font-size:13px; white-space:nowrap; }
+  .browse-btn:hover { background: #e8e5f7; border-color: var(--primary); }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>KMA Server</h1>
+  <div class="status">
+    <span class="dot" id="statusDot"></span><span id="statusText">检查中...</span>
+    <button class="btn btn-sm btn-primary" id="btnStartBackend" onclick="startBackend()" style="margin-left:12px; display:none;" title="启动 KMA Rust 后端服务">▶ 启动后端</button>
+    <span id="backendStatusHint" style="margin-left:8px; font-size:12px; color:var(--text-muted);"></span>
+  </div>
+</div>
+
+<div class="nav">
+  <button class="active" data-tab="projects">知识库</button>
+  <button data-tab="sources">Raw 文件</button>
+  <button data-tab="llm-config">LLM 配置</button>
+</div>
+
+<div class="container">
+  <div id="alertBox"></div>
+
+  <!-- Projects Tab -->
+  <div class="tab-content active" id="tab-projects">
+    <div class="card">
+      <h3>创建新知识库</h3>
+      <div class="form-row">
+        <div class="form-group">
+          <label>知识库名称</label>
+          <input type="text" id="newProjectName" placeholder="my-knowledge-base">
+        </div>
+        <div class="form-group input-with-btn" style="flex:2;">
+          <div>
+            <label>存放路径</label>
+            <div class="input-with-btn">
+              <input type="text" id="newProjectPath" placeholder="D:/wikis">
+              <button class="browse-btn" onclick="openDirBrowser('newProjectPath')">浏览...</button>
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="createProject()">创建知识库</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>打开已有知识库</h3>
+      <div class="form-row">
+        <div class="form-group input-with-btn" style="flex:3;">
+          <div>
+            <label>项目路径</label>
+            <div class="input-with-btn">
+              <input type="text" id="openProjectPath" placeholder="D:/wikis/my-project">
+              <button class="browse-btn" onclick="openDirBrowser('openProjectPath')">浏览...</button>
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-outline" onclick="openProject()" style="align-self:flex-end;">打开</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>已注册的知识库</h3>
+      <div id="projectsList"></div>
+    </div>
+
+    <div class="card" id="wikiSummaryCard" style="display:none;">
+      <h3>Wiki 页面概览 <span id="wikiSummaryProjectLabel" class="mono" style="font-weight:normal; font-size:12px; color:var(--text-muted); margin-left:12px;"></span></h3>
+      <div id="wikiSummaryLoading" style="text-align:center; padding:12px;">
+        <span class="loading"></span>加载中...
+      </div>
+      <div id="wikiSummaryStats" style="display:none;"></div>
+      <div id="wikiSummaryList" style="margin-top: 12px; max-height: 400px; overflow-y: auto;"></div>
+    </div>
+  </div>
+
+  <!-- Sources Tab -->
+  <div class="tab-content" id="tab-sources">
+    <div class="card">
+      <h3>当前项目: <span id="currentProjectLabel" class="mono">未选择</span></h3>
+      <div class="form-row" style="margin-top:12px;">
+        <div class="form-group input-with-btn" style="flex:3;">
+          <div>
+            <label>项目路径</label>
+            <div class="input-with-btn">
+              <input type="text" id="sourcesProjectPath" placeholder="D:/wikis/my-project">
+              <button class="browse-btn" onclick="openDirBrowser('sourcesProjectPath')">浏览...</button>
+            </div>
+          </div>
+        </div>
+        <button class="btn btn-outline" onclick="loadSources()" style="align-self:flex-end;">加载</button>
+      </div>
+    </div>
+
+    <div class="card" id="sourcesImportCard" style="display:none;">
+      <h3>录入文件</h3>
+      <div class="form-row">
+        <div class="form-group input-with-btn" style="flex:2;">
+          <div>
+            <label>源文件路径</label>
+            <div class="input-with-btn">
+              <input type="text" id="importFilePath" placeholder="C:/docs/report.pdf">
+              <button class="browse-btn" onclick="openFileBrowser('importFilePath')">浏览...</button>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>目标子目录 (可选)</label>
+          <input type="text" id="importFileSubdir" placeholder="project-a">
+        </div>
+        <button class="btn btn-primary" onclick="importRawFile()" style="align-self:flex-end;">录入文件</button>
+      </div>
+    </div>
+
+    <div class="card" id="sourcesImportFolderCard" style="display:none;">
+      <h3>录入文件夹</h3>
+      <div class="form-row">
+        <div class="form-group input-with-btn" style="flex:2;">
+          <div>
+            <label>源文件夹路径</label>
+            <div class="input-with-btn">
+              <input type="text" id="importFolderPath" placeholder="C:/MyDocuments">
+              <button class="browse-btn" onclick="openDirBrowser('importFolderPath')">浏览...</button>
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>目标文件夹名 (可选)</label>
+          <input type="text" id="importFolderName" placeholder="my-docs">
+        </div>
+        <button class="btn btn-primary" onclick="importRawFolder()" style="align-self:flex-end;">录入文件夹</button>
+      </div>
+    </div>
+
+    <div class="card" id="sourcesListCard" style="display:none;">
+      <h3>已录入文件
+        <button class="btn btn-sm btn-outline" onclick="rescanSources()" style="float:right;" title="通知 KMA 后端重新扫描并处理 raw 文件">🔄 重新扫描</button>
+      </h3>
+      <div id="sourcesBreadcrumb" class="breadcrumb"></div>
+      <div id="sourcesList"></div>
+      <!-- rescan 进度面板 -->
+      <div id="rescanProgress" style="display:none; margin-top:12px; padding:10px 14px; border-radius:8px; border:1px solid var(--border); background: var(--bg-card); font-size:13px;">
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px;">
+          <span id="rescanProgressIcon" style="font-size:16px;">&#x23F3;</span>
+          <span id="rescanProgressLabel" style="font-weight:500;">正在处理...</span>
+          <span id="rescanProgressPercent" style="margin-left:auto; font-variant-numeric:tabular-nums;"></span>
+        </div>
+        <div style="display:flex; gap:12px; font-size:12px; color:var(--text-muted);">
+          <span>等待: <b id="rpPending">-</b></span>
+          <span>处理中: <b id="rpProcessing">-</b></span>
+          <span>完成: <b id="rpDone">-</b></span>
+          <span>失败: <b id="rpFailed">-</b></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LLM Config Tab -->
+  <div class="tab-content" id="tab-llm-config">
+    <div class="card">
+      <h3>LLM 模型配置</h3>
+      <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">此配置将同步到 KMA 后端，用于 AI 摄入、语义分析、Embedding 向量化等功能。</p>
+      <div class="form-group">
+        <label>API 端点 URL（兼容 OpenAI 格式）</label>
+        <input type="text" id="llmUrl" placeholder="https://api.deepseek.com/v1">
+      </div>
+      <div class="form-group" style="margin-top:12px;">
+        <label>Chat 模型名称</label>
+        <input type="text" id="llmModel" placeholder="deepseek-chat">
+      </div>
+      <div class="form-group" style="margin-top:12px;">
+        <label>Embedding 模型名称（可选，用于向量搜索和 Rescan）</label>
+        <input type="text" id="llmEmbeddingModel" placeholder="text-embedding-3-small">
+      </div>
+      <div class="form-group" style="margin-top:12px;">
+        <label>API Key</label>
+        <input type="password" id="llmApiKey" placeholder="sk-...">
+      </div>
+      <div style="margin-top:16px; display:flex; gap:8px;">
+        <button class="btn btn-primary" onclick="saveLlmConfig()">保存并同步到后端</button>
+        <button class="btn btn-outline" onclick="loadLlmConfigIntoForm()">重新加载</button>
+      </div>
+      <div id="llmConfigStatus" style="margin-top:12px;"></div>
+      <div id="llmConfigCurrent" style="margin-top:12px; padding:12px; background:#f5f5f8; border-radius:6px; border:1px solid #e2e5ee;"></div>
+    </div>
+
+    <div class="card">
+      <h3>配置说明</h3>
+      <div style="font-size:13px; color:var(--text-muted); line-height:1.8;">
+        <p>配置保存后会自动同步到 KMA 后端的 <code>app-state.json</code>，使其对所有 AI 功能生效。</p>
+        <p><strong>API 端点 URL：</strong>支持所有兼容 OpenAI Chat Completions 格式的 API，例如：</p>
+        <ul style="padding-left:20px; margin:4px 0;">
+          <li><code>https://api.openai.com/v1</code> — OpenAI 官方</li>
+          <li><code>https://api.deepseek.com/v1</code> — DeepSeek</li>
+          <li><code>https://dashscope.aliyuncs.com/compatible-mode/v1</code> — 阿里百炼</li>
+        </ul>
+        <p style="margin-top:8px;"><strong>API Key：</strong>在相应平台获取的密钥。</p>
+        <p style="margin-top:8px;"><strong>Embedding 模型：</strong>用于 Rescan 时将文本转为向量，留空则使用 Chat 端点自动处理（部分 API 不支持，建议填写专用 embedding 模型）。</p>
+        <p style="margin-top:8px; color:var(--warning);">⚠ 配置将保存到 <code>config/llm_config.json</code> 文件，不会上传到任何远程服务。</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Directory Browser Modal -->
+<div class="modal-overlay" id="dirBrowserModal" onclick="if(event.target===this)closeDirBrowser()">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3 id="dirBrowserTitle">选择目录</h3>
+      <button class="close-btn" onclick="closeDirBrowser()">&times;</button>
+    </div>
+    <div class="modal-path" id="dirBrowserPath"></div>
+    <div class="modal-body" id="dirBrowserBody">
+      <div class="entry loading-entry"><span class="icon">⏳</span> 加载中...</div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeDirBrowser()">取消</button>
+      <button class="btn btn-primary" id="dirBrowserSelectBtn" onclick="selectDirBrowser()">选择此目录</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ------- Navigation -------
+document.querySelectorAll('.nav button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+// ------- Alert helper -------
+function showAlert(msg, type) {
+  const box = document.getElementById('alertBox');
+  const cls = type === 'error' ? 'alert-error' : type === 'success' ? 'alert-success' : 'alert-info';
+  box.innerHTML = `<div class="alert ${cls}">${msg}</div>`;
+  setTimeout(() => { if (box.firstChild && box.firstChild.textContent === msg) box.innerHTML = ''; }, 5000);
+}
+function clearAlert() { document.getElementById('alertBox').innerHTML = ''; }
+
+// ------- API helpers -------
+async function api(url, opts) {
+  try {
+    const resp = await fetch(url, opts);
+    const data = await resp.json();
+    if (!resp.ok && data.message) throw new Error(data.message);
+    return data;
+  } catch (e) {
+    showAlert(e.message || '请求失败', 'error');
+    return null;
+  }
+}
+
+async function apiSilent(url, opts) {
+  try {
+    const resp = await fetch(url, opts);
+    const data = await resp.json();
+    return { ok: resp.ok, status: resp.status, data: data };
+  } catch (e) {
+    return { ok: false, status: 0, data: null, error: e.message };
+  }
+}
+
+// ------- Health check -------
+var g_llmWikiAuthRequired = false;
+var g_llmWikiAuthConfigured = false;
+var g_clipServerAvailable = false;
+var g_backendRunning = false;
+
+async function checkHealth() {
+  const result = await apiSilent('/api/v1/server/health');
+  const data = result.data;
+  const dot = document.getElementById('statusDot');
+  const txt = document.getElementById('statusText');
+  const btn = document.getElementById('btnStartBackend');
+  const hint = document.getElementById('backendStatusHint');
+  if (data && data.success) {
+    var llmStatus = data.llm_wiki_status;
+    var llmOk = llmStatus && llmStatus.ok !== false;
+    var authInfo = data.llm_wiki_auth || {};
+    g_llmWikiAuthRequired = authInfo.auth_required || false;
+    g_llmWikiAuthConfigured = authInfo.auth_configured || false;
+    g_clipServerAvailable = data.clip_server_available || false;
+    var statusParts = ['本服务运行中'];
+    if (llmOk) {
+      dot.className = 'dot ok';
+      if (g_llmWikiAuthRequired && !g_llmWikiAuthConfigured) {
+        statusParts.push('KMA 需要 Token');
+        dot.className = 'dot err';
+      } else if (g_llmWikiAuthConfigured) {
+        statusParts.push('KMA 已认证');
+      } else {
+        statusParts.push('KMA 可用');
+      }
+    } else {
+      statusParts.push('KMA 离线');
+      if (llmStatus && llmStatus.error) statusParts.push(llmStatus.error);
+    }
+    if (g_clipServerAvailable) {
+      statusParts.push('桌面应用已连接');
+    }
+    txt.textContent = statusParts.join(' | ');
+
+    g_backendRunning = llmOk;
+    if (g_backendRunning) {
+      btn.style.display = 'none';
+      hint.textContent = '✅ 后端运行中';
+    } else {
+      btn.style.display = 'inline-block';
+      hint.textContent = '';
+    }
+  } else {
+    dot.className = 'dot err';
+    txt.textContent = '连接失败';
+    btn.style.display = 'inline-block';
+    hint.textContent = '';
+  }
+}
+
+async function startBackend() {
+  var btn = document.getElementById('btnStartBackend');
+  var hint = document.getElementById('backendStatusHint');
+  btn.disabled = true;
+  btn.textContent = '启动中...';
+  hint.textContent = '⏳ 正在拉起 KMA 后端，请等待...';
+  var data = await api('/api/v1/server/backend/start', { method: 'POST' });
+  btn.disabled = false;
+  if (data && data.success) {
+    var d = data.data;
+    if (d.action === 'already_running') {
+      hint.textContent = d.auth_ok ? '✅ 后端运行中' : '⚠ 后端运行中但认证不匹配';
+      btn.style.display = 'none';
+      g_backendRunning = true;
+      if (d.auth_ok) {
+        showAlert('KMA 后端已在运行中，认证已配置', 'success');
+      } else {
+        showAlert('后端正在运行，但 Token 不匹配。请检查 LLM_WIKI_API_TOKEN 环境变量或删除 config/backend_token.json 后重新启动。', 'error');
+      }
+    } else if (d.action === 'started') {
+      hint.textContent = '✅ 后端已启动 (PID: ' + d.pid + ')';
+      btn.style.display = 'none';
+      g_backendRunning = true;
+      showAlert('KMA 后端已成功启动！请稍后刷新项目列表。', 'success');
+      setTimeout(checkHealth, 2000);
+    } else if (d.action === 'started_waiting') {
+      hint.textContent = '⏳ 进程已启动(PID: ' + d.pid + ')，端口未就绪，请稍候...';
+      btn.textContent = '重新检查';
+      showAlert('后端进程已启动但端口尚未就绪，请等待几秒后点击"重新检查"按钮。', 'info');
+    }
+  } else {
+    hint.textContent = '❌ 启动失败';
+    btn.textContent = '▶ 重试启动';
+    var errMsg = (data && data.data && data.data.error) ? data.data.error : '启动失败';
+    showAlert('后端启动失败: ' + errMsg, 'error');
+  }
+}
+
+// ------- Projects -------
+async function loadProjects() {
+  const div = document.getElementById('projectsList');
+  const result = await apiSilent('/api/v1/projects');
+  if (!result.ok) {
+    var msg = result.data && result.data.message ? result.data.message : '无法连接后端';
+    if (msg.indexOf('401') >= 0 || msg.indexOf('Unauthorized') >= 0) {
+      div.innerHTML = '<div class="alert alert-info" style="margin-top:12px;">KMA 后端需要 Token 认证。<br>本地操作（创建/打开知识库、管理文件）不受影响，可正常使用。</div>';
+    } else {
+      div.innerHTML = '<div class="empty">' + esc(msg) + '</div>';
+    }
+    return;
+  }
+  const data = result.data;
+  if (!data || !data.success) { div.innerHTML = '<div class="empty">无法加载项目列表</div>'; return; }
+  const projects = data.data?.projects || [];
+  const current = data.data?.currentProject;
+  if (projects.length === 0) {
+    div.innerHTML = '<div class="empty">暂无项目，请创建或打开一个知识库</div>';
+    return;
+  }
+  const rows = projects.map(p => `
+    <tr>
+      <td class="mono">${esc(p.id)}</td>
+      <td>${esc(p.name)}</td>
+      <td class="mono" style="font-size:11px;">${esc(p.path || '')}</td>
+      <td>${p.current ? '<span style="color:var(--success);font-weight:600;">当前</span>' : ''}</td>
+      <td>
+        <button class="btn btn-sm btn-outline" onclick="viewOverview('${esc(p.id)}')">概览</button>
+      </td>
+    </tr>`).join('');
+  div.innerHTML = `<table><thead><tr><th>ID</th><th>名称</th><th>路径</th><th></th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+async function createProject() {
+  const name = document.getElementById('newProjectName').value.trim();
+  const path = document.getElementById('newProjectPath').value.trim();
+  if (!name || !path) { showAlert('请填写知识库名称和存放路径', 'error'); return; }
+  clearAlert();
+  const data = await api('/api/v1/projects/create', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, path })
+  });
+  if (data && data.success) {
+    var d = data.data;
+    var msg = '知识库创建成功: ' + d.path;
+    var reg = d.backend_registration;
+    if (reg && reg.registered) {
+      msg += ' （已注册到后端）';
+    } else if (reg && !reg.registered) {
+      msg += ' （KMA 桌面应用未运行，后续搜索/向量化需先启动桌面应用）';
+    }
+    showAlert(msg, 'success');
+    document.getElementById('newProjectName').value = '';
+    document.getElementById('newProjectPath').value = '';
+    document.getElementById('sourcesProjectPath').value = d.path;
+    loadProjects();
+    loadWikiSummary(d.path);
+  }
+}
+
+async function openProject() {
+  const path = document.getElementById('openProjectPath').value.trim();
+  if (!path) { showAlert('请输入项目路径', 'error'); return; }
+  clearAlert();
+  const data = await api('/api/v1/projects/open', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ path })
+  });
+  if (data && data.success) {
+    var d = data.data;
+    var msg = '项目已打开: ' + d.name;
+    var reg = d.backend_registration;
+    if (reg && reg.registered) {
+      msg += ' （已注册到后端）';
+    } else if (reg && !reg.registered) {
+      msg += ' （KMA 桌面应用未运行，搜索等功能可能不可用）';
+    }
+    showAlert(msg, 'success');
+    document.getElementById('sourcesProjectPath').value = d.path;
+    loadProjects();
+    loadWikiSummary(d.path);
+  }
+}
+
+async function viewOverview(projectId) {
+  const data = await apiSilent('/api/v1/projects/' + projectId + '/overview');
+  if (data && data.data && data.data.success) {
+    const s = data.data.data.stats;
+    showAlert(
+      `项目: ${data.data.data.project?.name || projectId} — Wiki页面: ${s.wiki_pages} | 源文件: ${s.source_files} | 图节点: ${s.graph_nodes} | 图边: ${s.graph_edges}`,
+      'info'
+    );
+  } else {
+    showAlert('无法加载项目概览（需要 KMA 后端认证）', 'error');
+  }
+}
+
+async function loadWikiSummary(projectPath) {
+  var card = document.getElementById('wikiSummaryCard');
+  var loading = document.getElementById('wikiSummaryLoading');
+  var statsDiv = document.getElementById('wikiSummaryStats');
+  var listDiv = document.getElementById('wikiSummaryList');
+  var label = document.getElementById('wikiSummaryProjectLabel');
+
+  if (!projectPath) {
+    card.style.display = 'none';
+    return;
+  }
+
+  card.style.display = 'block';
+  label.textContent = projectPath;
+  loading.style.display = 'block';
+  statsDiv.style.display = 'none';
+  listDiv.innerHTML = '';
+
+  var result = await apiSilent('/api/v1/projects/wiki/summary?project_path=' + encodeURIComponent(projectPath));
+  loading.style.display = 'none';
+
+  if (result.ok && result.data && result.data.success) {
+    var d = result.data.data;
+    var pages = d.pages || [];
+    var stats = d.stats || {};
+
+    if (pages.length === 0) {
+      statsDiv.style.display = 'block';
+      statsDiv.innerHTML = '<p style="font-size:13px; color:var(--text-muted);">暂无 Wiki 页面。导入 raw 文件后点击"重新扫描"将自动生成。</p>';
+      listDiv.innerHTML = '';
+      return;
+    }
+
+    statsDiv.style.display = 'block';
+    var statItems = [];
+    var typeNames = { concept: '概念', entity: '实体', source: '源文件摘要', overview: '概览', index: '索引', log: '日志', link: '链接', unknown: '其他' };
+    for (var t in stats) {
+      statItems.push('<span style="display:inline-block; margin:0 8px 4px 0; padding:3px 10px; background:#e8f4fd; border-radius:12px; font-size:12px;">' + (typeNames[t] || t) + ': <strong>' + stats[t] + '</strong></span>');
+    }
+    statsDiv.innerHTML = '<div style="margin-bottom:8px;">总计 <strong>' + pages.length + '</strong> 个页面</div><div>' + statItems.join(' ') + '</div>';
+
+    var rows = pages.slice(0, 100).map(function(p) {
+      return '<tr>' +
+        '<td><strong>' + esc(p.title) + '</strong></td>' +
+        '<td><span style="font-size:11px; padding:1px 6px; border-radius:8px; background:#f0f0f5; color:var(--text-muted);">' + esc(p.page_type) + '</span></td>' +
+        '<td style="font-size:11px; color:var(--text-muted);">' + esc(p.rel_path) + '</td>' +
+        '<td style="font-size:11px;">' + esc(new Date(p.modified_at * 1000).toLocaleString('zh-CN')) + '</td>' +
+        '</tr>';
+    }).join('');
+    listDiv.innerHTML = '<table><thead><tr><th>标题</th><th>类型</th><th>路径</th><th>更新时间</th></tr></thead><tbody>' + rows + '</tbody></table>';
+    if (pages.length > 100) {
+      listDiv.innerHTML += '<div style="text-align:center; padding:8px; font-size:12px; color:var(--text-muted);">仅显示前 100 个页面</div>';
+    }
+  } else {
+    statsDiv.style.display = 'block';
+    statsDiv.innerHTML = '<p style="font-size:13px; color:var(--text-muted);">无法加载 Wiki 页面</p>';
+  }
+}
+
+// ------- Sources -------
+let currentSourcesPath = '';
+
+async function loadSources(subdir) {
+  const projectPath = document.getElementById('sourcesProjectPath').value.trim();
+  if (!projectPath) { showAlert('请输入项目路径', 'error'); return; }
+  clearAlert();
+
+  document.getElementById('currentProjectLabel').textContent = projectPath;
+
+  let url = '/api/v1/projects/sources?project_path=' + encodeURIComponent(projectPath);
+  if (subdir) {
+    url += '&subdir=' + encodeURIComponent(subdir);
+    currentSourcesPath = subdir;
+  } else {
+    currentSourcesPath = '';
+  }
+
+  const data = await api(url);
+  const listDiv = document.getElementById('sourcesList');
+  const bcDiv = document.getElementById('sourcesBreadcrumb');
+
+  document.getElementById('sourcesImportCard').style.display = 'block';
+  document.getElementById('sourcesImportFolderCard').style.display = 'block';
+  document.getElementById('sourcesListCard').style.display = 'block';
+
+  // Breadcrumb
+  if (currentSourcesPath) {
+    const parts = currentSourcesPath.split('/');
+    let bc = '<a onclick="loadSources()">root</a> / ';
+    let cumulative = '';
+    parts.forEach((part, i) => {
+      cumulative += (i > 0 ? '/' : '') + part;
+      if (i === parts.length - 1) {
+        bc += '<span>' + esc(part) + '</span>';
+      } else {
+        bc += '<a onclick="loadSources(\'' + esc(cumulative) + '\')">' + esc(part) + '</a> / ';
+      }
+    });
+    bcDiv.innerHTML = bc;
+  } else {
+    bcDiv.innerHTML = '';
+  }
+
+  if (!data || !data.success || !data.data) {
+    listDiv.innerHTML = '<div class="empty">加载失败</div>';
+    return;
+  }
+
+  const sources = data.data.sources || [];
+  if (sources.length === 0) {
+    listDiv.innerHTML = '<div class="empty">暂无录入文件</div>';
+    return;
+  }
+
+  const dirs = sources.filter(s => s.is_dir);
+  const files = sources.filter(s => !s.is_dir);
+
+  let html = '<div class="file-tree">';
+  dirs.forEach(d => {
+    var cleanPath = d.relative_path.replace(/\/$/, '');
+    html += '<div class="dir" onclick="loadSources(\'' + esc(cleanPath) + '\')">📁 ' + esc(d.filename) + '/</div>';
+  });
+  files.forEach(f => {
+    html += `<div class="file">📄 ${esc(f.relative_path)} <span style="color:var(--text-muted);">(${formatSize(f.size)})</span>
+      <span class="actions">
+        <button class="btn btn-sm btn-danger" onclick="deleteRawSource('${esc(f.relative_path)}')">删除</button>
+      </span></div>`;
+  });
+  html += '</div>';
+  listDiv.innerHTML = html;
+}
+
+async function importRawFile() {
+  const projectPath = document.getElementById('sourcesProjectPath').value.trim();
+  const filePath = document.getElementById('importFilePath').value.trim();
+  const subdir = document.getElementById('importFileSubdir').value.trim();
+  if (!projectPath || !filePath) { showAlert('请填写项目路径和源文件路径', 'error'); return; }
+  clearAlert();
+  const body = { project_path: projectPath, source_file_path: filePath };
+  if (subdir) body.target_subdir = subdir;
+  const data = await api('/api/v1/projects/sources/import-file', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (data && data.success) {
+    var msg = '文件已录入: ' + data.data.relative_path;
+    var rs = data.data.rescan;
+    if (rs && rs.triggered) {
+      msg += ' （已触发重新扫描，KMA 后端正在建立索引...）';
+      startRescanPoll(projectPath);
+    } else if (rs && rs.reason === 'project_not_found') {
+      msg += ' （提示：KMA 后端未找到此项目，请手动点击"重新扫描"按钮）';
+    } else if (rs && rs.reason === 'rescan_failed') {
+      var errMsg = rs.error || '';
+      if (errMsg.indexOf('超时') !== -1 || errMsg.indexOf('timeout') !== -1) {
+        msg += ' （文件较多，重试扫描仍然超时。KMA 后端可能仍在后台处理中，请稍后点击"重新扫描"按钮确认状态）';
+      } else {
+        msg += ' （重新扫描失败: ' + errMsg + '）';
+      }
+    }
+    showAlert(msg, 'success');
+    document.getElementById('importFilePath').value = '';
+    document.getElementById('importFileSubdir').value = '';
+    loadSources(currentSourcesPath || undefined);
+  }
+}
+
+async function importRawFolder() {
+  const projectPath = document.getElementById('sourcesProjectPath').value.trim();
+  const folderPath = document.getElementById('importFolderPath').value.trim();
+  const folderName = document.getElementById('importFolderName').value.trim();
+  if (!projectPath || !folderPath) { showAlert('请填写项目路径和源文件夹路径', 'error'); return; }
+  clearAlert();
+  const body = { project_path: projectPath, source_folder_path: folderPath };
+  if (folderName) body.folder_name = folderName;
+  const data = await api('/api/v1/projects/sources/import-folder', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  if (data && data.success) {
+    var msg = '文件夹已录入: ' + data.data.file_count + ' 个文件';
+    var rs = data.data.rescan;
+    if (rs && rs.triggered) {
+      msg += ' （已触发重新扫描，KMA 后端正在建立索引...）';
+      startRescanPoll(projectPath);
+    } else if (rs && rs.reason === 'project_not_found') {
+      msg += ' （提示：KMA 后端未找到此项目，请手动点击"重新扫描"按钮）';
+    } else if (rs && rs.reason === 'rescan_failed') {
+      var errMsg = rs.error || '';
+      if (errMsg.indexOf('超时') !== -1 || errMsg.indexOf('timeout') !== -1) {
+        msg += ' （文件较多，重试扫描仍然超时。KMA 后端可能仍在后台处理中，请稍后点击"重新扫描"按钮确认状态）';
+      } else {
+        msg += ' （重新扫描失败: ' + errMsg + '）';
+      }
+    }
+    showAlert(msg, 'success');
+    document.getElementById('importFolderPath').value = '';
+    document.getElementById('importFolderName').value = '';
+    loadSources(currentSourcesPath || undefined);
+  }
+}
+
+async function deleteRawSource(relPath) {
+  if (!confirm('确定要删除 "' + relPath + '" 吗？')) return;
+  const projectPath = document.getElementById('sourcesProjectPath').value.trim();
+  const data = await api('/api/v1/projects/sources?project_path=' + encodeURIComponent(projectPath) + '&rel_path=' + encodeURIComponent(relPath), {
+    method: 'DELETE'
+  });
+  if (data && data.success) {
+    showAlert('已删除: ' + relPath, 'success');
+    loadSources(currentSourcesPath || undefined);
+  }
+}
+
+// ------- Rescan 进度轮询 -------
+var g_rescanPollTimer = null;
+var g_rescanPollProjectPath = '';
+
+function showRescanProgress() {
+  document.getElementById('rescanProgress').style.display = 'block';
+}
+function hideRescanProgress() {
+  document.getElementById('rescanProgress').style.display = 'none';
+  if (g_rescanPollTimer) { clearInterval(g_rescanPollTimer); g_rescanPollTimer = null; }
+  g_rescanPollProjectPath = '';
+}
+
+async function pollRescanProgress() {
+  if (!g_rescanPollProjectPath) return;
+  const result = await apiSilent('/api/v1/projects/rescan-progress?project_path=' + encodeURIComponent(g_rescanPollProjectPath));
+  if (!result.ok || !result.data || !result.data.success) return;
+
+  const d = result.data.data;
+  const bg = d.background;
+  const q = d.queue_summary || {};
+  const done = q.done || 0;
+  const total = q.total || 0;
+  const processing = q.processing || 0;
+  const pending = q.pending || 0;
+  const failed = q.failed || 0;
+  const completed = done + (failed || 0);
+
+  document.getElementById('rpPending').textContent = pending;
+  document.getElementById('rpProcessing').textContent = processing;
+  document.getElementById('rpDone').textContent = done;
+  document.getElementById('rpFailed').textContent = failed;
+
+  if (bg && bg.status === 'running') {
+    document.getElementById('rescanProgressIcon').textContent = '\u23F3';
+    if (total > 0) {
+      var pct = Math.round((completed / total) * 100);
+      document.getElementById('rescanProgressLabel').textContent = 'KMA 后端正在扫描和索引文件...';
+      document.getElementById('rescanProgressPercent').textContent = pct + '% (' + completed + '/' + total + ')';
+    } else {
+      document.getElementById('rescanProgressLabel').textContent = 'KMA 后端正在扫描文件...';
+      document.getElementById('rescanProgressPercent').textContent = '';
+    }
+  } else if (bg && bg.status === 'done') {
+    document.getElementById('rescanProgressIcon').textContent = '\u2705';
+    document.getElementById('rescanProgressLabel').textContent = '扫描完成';
+    document.getElementById('rescanProgressPercent').textContent = total > 0 ? '100%' : '';
+  } else if (bg && bg.status === 'error') {
+    document.getElementById('rescanProgressIcon').textContent = '\u26A0\uFE0F';
+    document.getElementById('rescanProgressLabel').textContent = '扫描异常';
+    document.getElementById('rescanProgressPercent').textContent = bg.error || '';
+  } else {
+    // background 为 null：可能已完成并被清理，也可能还未建立连接
+    if (total > 0 && d.queue_exists) {
+      document.getElementById('rescanProgressIcon').textContent = '\u23F3';
+      var pct = Math.round((completed / total) * 100);
+      document.getElementById('rescanProgressLabel').textContent = '正在处理队列...';
+      document.getElementById('rescanProgressPercent').textContent = pct + '% (' + completed + '/' + total + ')';
+    } else if (d.queue_exists && total === 0) {
+      document.getElementById('rescanProgressIcon').textContent = '\u2705';
+      document.getElementById('rescanProgressLabel').textContent = '队列为空（已处理完毕或无需处理）';
+      document.getElementById('rescanProgressPercent').textContent = '';
+    } else {
+      document.getElementById('rescanProgressIcon').textContent = '\u23F3';
+      document.getElementById('rescanProgressLabel').textContent = '等待 KMA 后端建立连接...';
+      document.getElementById('rescanProgressPercent').textContent = '';
+    }
+  }
+
+  // 自动停止条件：后台状态为 done/error 且队列无活跃任务
+  if (bg && (bg.status === 'done' || bg.status === 'error') && processing === 0 && pending === 0) {
+    clearInterval(g_rescanPollTimer);
+    g_rescanPollTimer = null;
+    // 3秒后自动隐藏进度面板
+    setTimeout(function() {
+      if (!g_rescanPollTimer) hideRescanProgress();
+    }, 3000);
+  }
+}
+
+function startRescanPoll(projectPath) {
+  g_rescanPollProjectPath = projectPath;
+  if (g_rescanPollTimer) clearInterval(g_rescanPollTimer);
+  showRescanProgress();
+  pollRescanProgress(); // 立即执行一次
+  g_rescanPollTimer = setInterval(pollRescanProgress, 2000); // 每2秒轮询
+}
+
+async function rescanSources() {
+  const projectPath = document.getElementById('sourcesProjectPath').value.trim();
+  if (!projectPath) { showAlert('请输入项目路径', 'error'); return; }
+  clearAlert();
+  showAlert('正在触发重新扫描...（文档较多时可能需要等待1-5分钟）', 'info');
+  const data = await api('/api/v1/projects/sources/rescan', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ project_path: projectPath })
+  });
+  if (data && data.success) {
+    var rs = data.data;
+    if (rs && rs.triggered) {
+      showAlert('重新扫描已触发，KMA 后端正在处理 raw 文件...', 'success');
+      startRescanPoll(projectPath);
+    } else if (rs && rs.reason === 'project_not_found') {
+      showAlert('KMA 后端未找到此项目。请先在 KMA 桌面应用中打开该知识库项目，使其注册到后端。', 'error');
+    } else if (rs && rs.reason === 'rescan_failed') {
+      var errMsg = rs.error || '后端返回错误';
+      if (errMsg.indexOf('超时') !== -1 || errMsg.indexOf('timeout') !== -1) {
+        showAlert('文件较多，重试扫描仍然超时。KMA 后端可能仍在后台处理中，请稍后再次点击"重新扫描"按钮确认状态。', 'error');
+      } else {
+        showAlert('重新扫描失败: ' + errMsg, 'error');
+      }
+    }
+  }
+}
+
+// ------- Dir Browser -------
+let dirBrowserTargetInput = null;
+let dirBrowserCurrentPath = '';
+let dirBrowserMode = 'dir';
+
+// ------- LLM Config -------
+async function loadLlmConfigIntoForm() {
+  const div = document.getElementById('llmConfigStatus');
+  div.innerHTML = '<div class="alert alert-info">加载中...</div>';
+
+  var result = await apiSilent('/api/v1/server/llm-config');
+  if (result.ok && result.data && result.data.success) {
+    var cfg = result.data.data;
+    document.getElementById('llmUrl').value = cfg.llm_url || '';
+    document.getElementById('llmApiKey').value = cfg.llm_api_key || '';
+    document.getElementById('llmModel').value = cfg.llm_model || '';
+    document.getElementById('llmEmbeddingModel').value = cfg.llm_embedding_model || '';
+  }
+
+  var appStateResult = await apiSilent('/api/v1/server/llm-config/app-state');
+  var currentDiv = document.getElementById('llmConfigCurrent');
+  if (appStateResult.ok && appStateResult.data && appStateResult.data.success) {
+    var d = appStateResult.data.data;
+    var lc = d.llm_config || {};
+    var ec = d.embedding_config || {};
+    var providerLabel = lc.provider || '未配置';
+    var chatModel = lc.model || '—';
+    var chatEndpoint = lc.endpoint || '—';
+    var chatKeyHint = lc.api_key ? (lc.api_key.substring(0, 8) + '...' + lc.api_key.substring(lc.api_key.length - 4)) : '—';
+    var embModel = ec.model || '—';
+    var embEndpoint = ec.endpoint || '—';
+    var embEnabled = ec.enabled ? '✅ 启用' : '❌ 未启用';
+    var filePath = d.state_file || '—';
+
+    currentDiv.innerHTML =
+      '<h4 style="margin-bottom:8px;">KMA 后端当前使用的配置（app-state.json）</h4>' +
+      '<table style="font-size:12px; width:100%; border-collapse:collapse;">' +
+      '<tr><td style="padding:4px 8px; color:var(--text-muted); width:110px;">Provider</td><td style="padding:4px 8px;">' + escapeHtml(providerLabel) + '</td></tr>' +
+      '<tr><td style="padding:4px 8px; color:var(--text-muted);">Chat 模型</td><td style="padding:4px 8px;">' + escapeHtml(chatModel) + '</td></tr>' +
+      '<tr><td style="padding:4px 8px; color:var(--text-muted);">API 端点</td><td style="padding:4px 8px;">' + escapeHtml(chatEndpoint) + '</td></tr>' +
+      '<tr><td style="padding:4px 8px; color:var(--text-muted);">API Key</td><td style="padding:4px 8px;">' + escapeHtml(chatKeyHint) + '</td></tr>' +
+      '<tr><td style="padding:4px 8px; color:var(--text-muted);">Embedding</td><td style="padding:4px 8px;">' + escapeHtml(embEnabled) + '</td></tr>' +
+      '<tr><td style="padding:4px 8px; color:var(--text-muted);">Emb 模型</td><td style="padding:4px 8px;">' + escapeHtml(embModel) + '</td></tr>' +
+      '<tr><td style="padding:4px 8px; color:var(--text-muted);">Emb 端点</td><td style="padding:4px 8px;">' + escapeHtml(embEndpoint) + '</td></tr>' +
+      '<tr><td style="padding:4px 8px; color:var(--text-muted);">配置文件</td><td style="padding:4px 8px; font-size:11px; word-break:break-all;">' + escapeHtml(filePath) + '</td></tr>' +
+      '</table>';
+    div.innerHTML = '';
+  } else {
+    currentDiv.innerHTML =
+      '<h4 style="margin-bottom:8px; color:var(--text-muted);">KMA 后端当前使用配置</h4>' +
+      '<p style="font-size:12px; color:var(--text-muted);">找不到 app-state.json（KMA 桌面应用可能尚未运行过）</p>';
+    div.innerHTML = '';
+  }
+}
+
+function escapeHtml(str) {
+  var div = document.createElement('div');
+  div.appendChild(document.createTextNode(str));
+  return div.innerHTML;
+}
+
+async function saveLlmConfig() {
+  const url = document.getElementById('llmUrl').value.trim();
+  const key = document.getElementById('llmApiKey').value.trim();
+  const model = document.getElementById('llmModel').value.trim();
+  const embeddingModel = document.getElementById('llmEmbeddingModel').value.trim();
+  const div = document.getElementById('llmConfigStatus');
+  div.innerHTML = '<div class="alert alert-info">保存中...</div>';
+  const data = await api('/api/v1/server/llm-config', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      llm_url: url,
+      llm_api_key: key,
+      llm_model: model,
+      llm_embedding_model: embeddingModel
+    })
+  });
+  if (data && data.success) {
+    var synced = data.data && data.data.app_state_synced;
+    var msg = '配置已保存';
+    if (synced) {
+      msg += '，已同步到 KMA 后端（app-state.json）';
+    } else {
+      msg += '（KMA 后端未运行，启动后将自动加载此配置）';
+    }
+    div.innerHTML = '<div class="alert alert-success">' + msg + '</div>';
+    setTimeout(function(){ div.innerHTML = ''; }, 5000);
+  }
+}
+
+// Make the LLM config tab auto-load when switched to
+document.addEventListener('DOMContentLoaded', function() {
+  var origNavClick = null;
+  document.querySelectorAll('.nav button').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      if (btn.dataset.tab === 'llm-config') {
+        setTimeout(loadLlmConfigIntoForm, 50);
+      }
+    });
+  });
+});
+
+async function openDirBrowser(inputId) {
+  dirBrowserTargetInput = inputId;
+  dirBrowserMode = 'dir';
+  document.getElementById('dirBrowserTitle').textContent = '选择目录';
+  document.getElementById('dirBrowserSelectBtn').style.display = '';
+  document.getElementById('dirBrowserModal').classList.add('show');
+  var currentVal = document.getElementById(inputId).value.trim();
+  await navigateDirBrowser(currentVal || '');
+}
+
+async function openFileBrowser(inputId) {
+  dirBrowserTargetInput = inputId;
+  dirBrowserMode = 'file';
+  document.getElementById('dirBrowserTitle').textContent = '选择文件';
+  document.getElementById('dirBrowserSelectBtn').style.display = 'none';
+  document.getElementById('dirBrowserModal').classList.add('show');
+  var currentVal = document.getElementById(inputId).value.trim();
+  var startPath = currentVal ? currentVal.substring(0, currentVal.lastIndexOf('/')) || currentVal : '';
+  await navigateDirBrowser(startPath);
+}
+
+function closeDirBrowser() {
+  document.getElementById('dirBrowserModal').classList.remove('show');
+  dirBrowserTargetInput = null;
+  dirBrowserCurrentPath = '';
+}
+
+function selectDirBrowser() {
+  if (dirBrowserTargetInput && dirBrowserCurrentPath) {
+    document.getElementById(dirBrowserTargetInput).value = dirBrowserCurrentPath;
+  }
+  closeDirBrowser();
+}
+
+async function navigateDirBrowser(path) {
+   var body = document.getElementById('dirBrowserBody');
+   body.innerHTML = '<div class="entry loading-entry"><span class="loading"></span> 加载中...</div>';
+   dirBrowserCurrentPath = path;
+   document.getElementById('dirBrowserPath').textContent = path || '(根目录)';
+ 
+   var url = '/api/v1/filesystem/list?path=' + encodeURIComponent(path);
+   var data = await api(url);
+   if (!data || !data.success) { body.innerHTML = '<div class="entry" style="color:var(--danger);">加载失败: ' + (data?.message || '未知错误') + '</div>'; return; }
+ 
+   var entries = data.data.entries || [];
+   if (data.data.path) {
+     dirBrowserCurrentPath = data.data.path;
+     document.getElementById('dirBrowserPath').textContent = data.data.path;
+   }
+ 
+   var html = '';
+   entries.forEach(function(e) {
+     if (e.is_parent) {
+       html += '<div class="entry" data-path="' + esc(e.path) + '" data-action="navigate"><span class="icon">⬆</span> ' + esc(e.name) + '</div>';
+     } else if (e.is_dir) {
+       html += '<div class="entry" data-path="' + esc(e.path) + '" data-action="navigate"><span class="icon">📁</span> ' + esc(e.name) + '</div>';
+     } else {
+       var isFileMode = dirBrowserMode === 'file';
+       html += '<div class="entry" data-path="' + esc(e.path) + '" data-action="select"' + (isFileMode ? ' style="cursor:pointer;"' : ' style="color:var(--text-muted);cursor:default;"') + '><span class="icon">📄</span> ' + esc(e.name) + '</div>';
+     }
+   });
+   body.innerHTML = html;
+ }
+ 
+ document.getElementById('dirBrowserBody').addEventListener('click', function(event) {
+   var entry = event.target.closest('.entry');
+   if (!entry) return;
+   var action = entry.getAttribute('data-action');
+   var path = entry.getAttribute('data-path');
+   if (!action || !path) return;
+   if (action === 'navigate') {
+     navigateDirBrowser(path);
+   } else if (action === 'select' && dirBrowserMode === 'file') {
+     selectFileBrowser(path);
+   }
+ });
+ 
+ function selectFileBrowser(path) {
+   if (dirBrowserTargetInput) {
+     document.getElementById(dirBrowserTargetInput).value = path;
+   }
+   closeDirBrowser();
+ }
+
+// ------- Utils -------
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+  return (bytes/(1024*1024)).toFixed(1) + ' MB';
+}
+
+// ------- Init -------
+checkHealth();
+loadProjects();
+setInterval(checkHealth, 30000);
+</script>
+</body>
+</html>

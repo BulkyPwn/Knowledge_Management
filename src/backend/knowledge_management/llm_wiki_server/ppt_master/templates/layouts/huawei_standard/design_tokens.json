@@ -1,0 +1,25 @@
+{
+  "theme": "light",
+  "visual_style": "huawei-corporate",
+  "colors": {
+    "bg": "#FFFFFF",
+    "secondary_bg": "#F5F5F5",
+    "primary": "#C7000B",
+    "accent": "#FBAE40",
+    "secondary_accent": "#EA5A4F",
+    "text": "#1D1D1B",
+    "text_secondary": "#666666",
+    "border": "#DDDDDD",
+    "success": "#2E7D32",
+    "warning": "#FBAE40"
+  },
+  "typography": {
+    "font_stack": "\"Microsoft YaHei\", Arial, sans-serif",
+    "title_stack": "Arial, \"Microsoft YaHei\", sans-serif",
+    "body_size": 20,
+    "title_size": 34
+  },
+  "chart_palette": ["#C7000B", "#EA5A4F", "#FBAE40", "#78000F", "#898989"],
+  "icons": ["chart-bar", "target", "trending-up", "settings", "database", "shield", "users", "network", "check", "alert-triangle"],
+  "design_rationale": "Huawei corporate light theme with restrained red accents, neutral information fields, and editable content geometry."
+}

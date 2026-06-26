@@ -1,0 +1,13 @@
+# 全局模型配置
+models:
+  - id: glm-5
+    name: glm-5
+  - id: deepseek-ai/DeepSeek-V4-Pro
+    name: deepseek-ai/DeepSeek-V4-Pro
+  - id: Qwen3.6-35B
+    name: Qwen3.6-35B
+  - id: DeepSeek-V4-Flash
+    name: DeepSeek-V4-Flash
+
+# 知识管理页面默认模型
+default: deepseek-ai/DeepSeek-V4-Pro

@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "llm-wiki": {
+      "command": "C:\\Python314\\python.exe",
+      "args": ["D:/dongxiaohan/Code/one-stop-desktop-tool/knowledge_management/llm_wiki_mcp_server/mcp_server.py"],
+      "env": {
+        "LLM_WIKI_SERVER_URL": "http://127.0.0.1:5002"
+      }
+    }
+  }
+}

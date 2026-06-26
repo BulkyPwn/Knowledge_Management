@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Product
+    Id="*"
+    Name="AI_Assistant_Omni"
+    Manufacturer="SSSC"
+    Version="$(var.Version)"
+    UpgradeCode="B8D6E0A1-2F3C-4A5D-9E7B-1C3D5F8A2E46"
+    Language="1033"
+    Codepage="1252">
+
+    <Package
+      Id="*"
+      InstallerVersion="500"
+      Compressed="yes"
+      InstallScope="perMachine"
+      Manufacturer="SSSC"
+      Description="AI One-Stop Desktop Application" />
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of AI_Assistant_Omni is already installed." />
+
+    <Media Id="1" Cabinet="app.cab" EmbedCab="yes" />
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFiles64Folder">
+        <Directory Id="INSTALLDIR" Name="AI_Assistant_Omni" />
+      </Directory>
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="AppShortcutsDir" Name="AI_Assistant_Omni" />
+      </Directory>
+    </Directory>
+
+    <DirectoryRef Id="INSTALLDIR">
+      <Component Id="SetPathEnv" Guid="C7E2F1A3-5B8D-4E6A-9C3F-2D7B8E1A4F56" KeyPath="yes">
+        <Environment
+          Id="PATH"
+          Name="PATH"
+          Value="[INSTALLDIR]"
+          Permanent="no"
+          Part="last"
+          Action="set"
+          System="no" />
+      </Component>
+    </DirectoryRef>
+
+    <DirectoryRef Id="AppShortcutsDir">
+      <Component Id="AppShortcut" Guid="D4A1B2C3-6E7F-8A9B-0C1D-2E3F4A5B6C7D">
+        <Shortcut
+          Id="AppStartMenuShortcut"
+          Name="AI_Assistant_Omni"
+          Description="AI One-Stop Desktop Application"
+          Target="[INSTALLDIR]AI_Assistant_Omni.exe"
+          WorkingDirectory="INSTALLDIR" />
+        <RemoveFolder Id="RemoveAppShortcutsDir" On="uninstall" />
+        <RegistryValue
+          Root="HKCU"
+          Key="Software\SSSC\AI_Assistant_Omni"
+          Name="Installed"
+          Type="integer"
+          Value="1"
+          KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+
+    <Feature Id="MainFeature" Level="1">
+      <ComponentGroupRef Id="AppFiles" />
+      <ComponentRef Id="SetPathEnv" />
+      <ComponentRef Id="AppShortcut" />
+    </Feature>
+
+    <UI>
+      <UIRef Id="WixUI_InstallDir" />
+    </UI>
+
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLDIR" />
+
+  </Product>
+</Wix>

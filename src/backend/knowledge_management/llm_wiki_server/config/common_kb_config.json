@@ -1,0 +1,26 @@
+{
+  "Yellow_Zone_Common_Server": {
+    "host": "7.212.122.246",
+    "port": 22,
+    "username": "root",
+    "password": "Huawei12#$",
+    "remote_path": "/home/Knowledge_Management/common",
+    "local_path": "D:\\Knowledge_Management\\common"
+  },
+  "Blue_Zone_Common_Server": {
+    "host": "192.168.0.131",
+    "port": 22,
+    "username": "root",
+    "password": "Huawei@1234",
+    "remote_path": "/home/Knowledge_Management/common",
+    "local_path": "D:\\Knowledge_Management\\common"
+  },
+  "demo": {
+    "host": "192.168.0.50",
+    "port": 22,
+    "username": "root",
+    "password": "",
+    "remote_path": "/home/Knowledge_Management/common",
+    "local_path": "D:\\Knowledge_Management\\common"
+  }
+}

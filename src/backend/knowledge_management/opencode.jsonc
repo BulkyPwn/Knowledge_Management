@@ -1,0 +1,13 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "llm-wiki": {
+      "type": "local",
+      "command": ["C:\\Python314\\python.exe", "D:/dongxiaohan/Code/one-stop-desktop-tool/knowledge_management/llm_wiki_mcp_server/mcp_server.py"],
+      "enabled": true,
+      "environment": {
+        "LLM_WIKI_SERVER_URL": "http://127.0.0.1:5002"
+      }
+    }
+  }
+}

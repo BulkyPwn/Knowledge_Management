@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fusion Search Debug Panel</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    --bg: #1a1b26;
+    --panel-bg: #24283b;
+    --border: #414868;
+    --text: #c0caf5;
+    --text-dim: #565f89;
+    --accent: #7aa2f7;
+    --accent2: #9ece6a;
+    --warn: #e0af68;
+    --error: #f7768e;
+    --info: #7dcfff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', system-ui, monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+  header {
+    background: var(--panel-bg);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  header h1 { font-size: 18px; color: var(--accent); }
+  header .sub { font-size: 12px; color: var(--text-dim); margin-left: auto; }
+  .tabs {
+    display: flex;
+    gap: 0;
+    background: var(--panel-bg);
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
+  }
+  .tab-btn {
+    padding: 10px 20px;
+    border: none;
+    background: none;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-size: 14px;
+    border-bottom: 2px solid transparent;
+    transition: all .2s;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-panel { display: none; padding: 20px; }
+  .tab-panel.active { display: block; }
+  .card {
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .card h3 { font-size: 14px; color: var(--accent); margin-bottom: 12px; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td {
+    text-align: left;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+  th { color: var(--text-dim); font-weight: 600; }
+  .status-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .status-loaded { background: #1a3a1a; color: var(--accent2); }
+  .status-not_found { background: #333; color: var(--text-dim); }
+  .status-error { background: #3a1a1a; color: var(--error); }
+  .trace-table td { font-size: 12px; }
+  .trace-table .level-info { color: var(--info); }
+  .trace-table .level-error { color: var(--error); }
+  .trace-table .level-warn { color: var(--warn); }
+  .mermaid-wrapper {
+    overflow-x: auto;
+    display: flex;
+    justify-content: center;
+    min-height: 400px;
+  }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .stat-card {
+    background: var(--panel-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px 16px;
+    text-align: center;
+  }
+  .stat-value { font-size: 28px; color: var(--accent); font-weight: 700; }
+  .stat-label { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+  .btn {
+    padding: 6px 14px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--panel-bg);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 13px;
+  }
+  .btn:hover { border-color: var(--accent); color: var(--accent); }
+  .btn-danger { border-color: var(--error); color: var(--error); }
+  .select-box {
+    padding: 6px 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 4px;
+    font-size: 13px;
+  }
+  .empty-msg { color: var(--text-dim); font-size: 13px; padding: 20px; text-align: center; }
+  .refreshing { opacity: .5; }
+  .doc-preview {
+    max-height: 120px;
+    overflow-y: auto;
+    font-size: 12px;
+    color: var(--text-dim);
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+  .trace-json {
+    background: var(--bg);
+    padding: 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    white-space: pre-wrap;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Fusion Search Debug Panel</h1>
+  <span class="sub">LlamaIndex + LangGraph</span>
+  <span id="refresh-indicator" style="font-size:12px;color:var(--accent2);margin-left:12px;display:none;">已刷新</span>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" data-tab="graph">Graph</button>
+  <button class="tab-btn" data-tab="indexes">Indexes</button>
+  <button class="tab-btn" data-tab="traces">Traces</button>
+</div>
+
+<!-- Graph Tab -->
+<div class="tab-panel active" id="tab-graph">
+  <button class="btn" onclick="refreshGraph()" style="margin-bottom:12px;">刷新图结构</button>
+  <div class="card" id="graph-card">
+    <h3>LangGraph 检索流水线</h3>
+    <div class="mermaid-wrapper" id="mermaid-container">
+      <span class="empty-msg">加载中...</span>
+    </div>
+  </div>
+</div>
+
+<!-- Indexes Tab -->
+<div class="tab-panel" id="tab-indexes">
+  <button class="btn" onclick="refreshIndexes()" style="margin-bottom:12px;">刷新索引</button>
+  <div class="stats-grid" id="stats-grid"></div>
+
+  <div class="card">
+    <h3>索引列表</h3>
+    <table id="index-table">
+      <thead><tr><th>索引名称</th><th>文档数</th><th>状态</th></tr></thead>
+      <tbody><tr><td colspan="3" class="empty-msg">加载中...</td></tr></tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h3>浏览文档内容</h3>
+    <div style="display:flex;gap:8px;margin-bottom:12px;align-items:center;">
+      <select id="doc-index-select" class="select-box" onchange="browseDocuments()"></select>
+      <button class="btn" onclick="browseDocuments()">浏览</button>
+      <span id="doc-pagination" style="font-size:12px;color:var(--text-dim);"></span>
+    </div>
+    <div id="doc-list" class="empty-msg">选择索引后浏览</div>
+  </div>
+</div>
+
+<!-- Traces Tab -->
+<div class="tab-panel" id="tab-traces">
+  <div style="display:flex;gap:8px;margin-bottom:12px;">
+    <button class="btn" onclick="refreshTraces()">刷新 Traces</button>
+    <button class="btn btn-danger" onclick="clearTraces()">清空</button>
+  </div>
+  <div class="card" id="trace-card">
+    <h3>最近执行记录</h3>
+    <table class="trace-table" id="trace-table">
+      <thead><tr><th>时间</th><th>类型</th><th>级别</th><th>数据摘要</th></tr></thead>
+      <tbody><tr><td colspan="4" class="empty-msg">尚无记录（执行一次 fusion_search 后出现）</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+// ── Tab switching ──
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+function flashRefresh() {
+  const el = document.getElementById('refresh-indicator');
+  el.style.display = 'inline';
+  setTimeout(() => el.style.display = 'none', 1500);
+}
+
+// ── Graph ──
+mermaid.initialize({ startOnLoad: false, theme: 'dark' });
+
+async function refreshGraph() {
+  const container = document.getElementById('mermaid-container');
+  container.innerHTML = '<span class="empty-msg">加载中...</span>';
+  try {
+    const resp = await fetch('/api/v1/debug/langgraph/graph');
+    const json = await resp.json();
+    if (!json.success) {
+      container.innerHTML = `<span class="empty-msg" style="color:var(--error);">加载失败: ${json.message}</span>`;
+      return;
+    }
+    const { data } = json;
+
+    // Render Mermaid
+    if (data.mermaid) {
+      const id = 'mermaid-' + Date.now();
+      container.innerHTML = `<div class="mermaid" id="${id}">${data.mermaid}</div>`;
+      await mermaid.run({ querySelector: '#' + id });
+    }
+
+    // Also show legend
+    const legend = data.nodes.map(n =>
+      `<span style="display:inline-block;padding:2px 6px;margin:2px;border-radius:3px;background:var(--panel-bg);font-size:11px;" title="${n.desc}">${n.label}</span>`
+    ).join(' ');
+    const legendDiv = document.createElement('div');
+    legendDiv.style.cssText = 'margin-top:12px;text-align:center;';
+    legendDiv.innerHTML = legend;
+    container.appendChild(legendDiv);
+
+    flashRefresh();
+  } catch (e) {
+    container.innerHTML = `<span class="empty-msg" style="color:var(--error);">错误: ${e.message}</span>`;
+  }
+}
+
+// ── Indexes ──
+async function refreshIndexes() {
+  try {
+    const resp = await fetch('/api/v1/debug/llamaindex/overview');
+    const json = await resp.json();
+    if (!json.success) return;
+
+    const indexes = json.data.indexes || [];
+    const totalDocs = indexes.reduce((s, i) => s + (i.doc_count || 0), 0);
+    const loadedCount = indexes.filter(i => i.status === 'loaded').length;
+
+    // Stats grid
+    document.getElementById('stats-grid').innerHTML = `
+      <div class="stat-card"><div class="stat-value">${indexes.length}</div><div class="stat-label">索引数</div></div>
+      <div class="stat-card"><div class="stat-value">${totalDocs}</div><div class="stat-label">文档总数</div></div>
+      <div class="stat-card"><div class="stat-value">${loadedCount}</div><div class="stat-label">已加载</div></div>
+    `;
+
+    // Table
+    const tbody = document.querySelector('#index-table tbody');
+    if (indexes.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="3" class="empty-msg">${json.data.note || '无索引数据'}</td></tr>`;
+    } else {
+      tbody.innerHTML = indexes.map(i => `
+        <tr>
+          <td>${i.name}</td>
+          <td>${i.doc_count}</td>
+          <td><span class="status-badge status-${i.status}">${i.status}</span></td>
+        </tr>
+      `).join('');
+    }
+
+    // Populate select
+    const select = document.getElementById('doc-index-select');
+    select.innerHTML = '<option value="">-- 选择索引 --</option>' +
+      indexes.map(i => `<option value="${i.name}">${i.name} (${i.doc_count})</option>`).join('');
+
+    flashRefresh();
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+let docOffset = 0;
+async function browseDocuments(offset) {
+  if (offset !== undefined) docOffset = offset;
+  const indexName = document.getElementById('doc-index-select').value;
+  if (!indexName) {
+    document.getElementById('doc-list').innerHTML = '<span class="empty-msg">请先选择索引</span>';
+    return;
+  }
+
+  const container = document.getElementById('doc-list');
+  container.innerHTML = '<span class="empty-msg">加载中...</span>';
+
+  try {
+    const resp = await fetch(`/api/v1/debug/llamaindex/documents?index_name=${indexName}&offset=${docOffset}&limit=10`);
+    const json = await resp.json();
+    if (!json.success) {
+      container.innerHTML = `<span class="empty-msg" style="color:var(--error);">${json.message}</span>`;
+      return;
+    }
+    const { documents, total, offset: off, limit } = json.data;
+
+    if (documents.length === 0) {
+      container.innerHTML = '<span class="empty-msg">无文档</span>';
+      document.getElementById('doc-pagination').textContent = '';
+      return;
+    }
+
+    const end = Math.min(off + limit, total);
+    document.getElementById('doc-pagination').textContent = `${off + 1}-${end} / ${total}`;
+
+    container.innerHTML = documents.map((d, i) => `
+      <div class="card" style="margin-bottom:8px;">
+        <div style="font-size:12px;color:var(--accent);margin-bottom:4px;">#${off + i + 1} <span style="color:var(--text-dim);">${d.doc_id}</span></div>
+        <div class="doc-preview">${d.text}</div>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">
+          ${Object.entries(d.metadata || {}).map(([k,v]) => `<span style="margin-right:8px;">${k}: ${v}</span>`).join('')}
+        </div>
+      </div>
+    `).join('');
+
+    // Pagination buttons
+    const pagDiv = document.createElement('div');
+    pagDiv.style.cssText = 'display:flex;gap:8px;margin-top:8px;';
+    if (off > 0) {
+      const prevBtn = document.createElement('button');
+      prevBtn.className = 'btn';
+      prevBtn.textContent = '上一页';
+      prevBtn.onclick = () => browseDocuments(Math.max(0, off - limit));
+      pagDiv.appendChild(prevBtn);
+    }
+    if (off + limit < total) {
+      const nextBtn = document.createElement('button');
+      nextBtn.className = 'btn';
+      nextBtn.textContent = '下一页';
+      nextBtn.onclick = () => browseDocuments(off + limit);
+      pagDiv.appendChild(nextBtn);
+    }
+    container.appendChild(pagDiv);
+  } catch (e) {
+    container.innerHTML = `<span class="empty-msg" style="color:var(--error);">错误: ${e.message}</span>`;
+  }
+}
+
+// ── Traces ──
+async function refreshTraces() {
+  try {
+    const resp = await fetch('/api/v1/debug/traces?limit=50');
+    const json = await resp.json();
+    if (!json.success) return;
+
+    const traces = json.data.traces || [];
+    const tbody = document.querySelector('#trace-table tbody');
+    if (traces.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" class="empty-msg">尚无记录（执行一次 fusion_search 后出现）</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = traces.reverse().map(t => {
+      const ts = t.timestamp || '';
+      const shortTs = ts.replace('T', ' ').substring(0, 19);
+      const dataPreview = JSON.stringify(t.data || {}).substring(0, 120);
+      return `
+        <tr>
+          <td style="white-space:nowrap;">${shortTs}</td>
+          <td style="color:var(--accent2);white-space:nowrap;">${t.type}</td>
+          <td><span class="level-${t.level || 'info'}">${t.level || 'info'}</span></td>
+          <td><div class="doc-preview trace-json">${dataPreview}</div></td>
+        </tr>
+      `;
+    }).join('');
+
+    flashRefresh();
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+async function clearTraces() {
+  if (!confirm('确认清空所有 trace 记录？')) return;
+  await fetch('/api/v1/debug/traces/clear', { method: 'POST' });
+  refreshTraces();
+}
+
+// ── Auto-load on page init ──
+refreshGraph();
+refreshIndexes();
+refreshTraces();
+
+// Auto-refresh traces every 5 seconds when on traces tab
+setInterval(() => {
+  const activeTab = document.querySelector('.tab-btn.active');
+  if (activeTab && activeTab.dataset.tab === 'traces') {
+    refreshTraces();
+  }
+}, 5000);
+</script>
+
+</body>
+</html>

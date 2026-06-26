@@ -1,0 +1,27 @@
+{
+  "platforms": {
+    "local": false,
+    "remote": false
+  },
+  "proxyEnabled": false,
+  "proxyUrl": "",
+  "savedModels": [],
+  "selectedModelConfigId": "",
+  "preprocessor": {
+    "enabled": true,
+    "port": 5900,
+    "timeout_seconds": 300,
+    "processors": {
+      "cloudmodeling_plantuml": {
+        "name": "CloudModeling PlantUML 转换",
+        "description": "将 Markdown 中的 CloudModeling diagram URL 转换为 PlantUML 代码块",
+        "enabled": true
+      },
+      "cloudmodeling_svg": {
+        "name": "CloudModeling SVG 导出",
+        "description": "PlantUML 转换失败时，回退导出为 SVG 图片引用",
+        "enabled": true
+      }
+    }
+  }
+}

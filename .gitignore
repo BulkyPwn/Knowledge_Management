@@ -1,0 +1,24 @@
+build/
+dist/
+node_modules/
+vendor/
+.pip-cache/
+.venv/
+.electron-builder-cache/
+.deepeval/
+.env
+
+# Python
+__pycache__/
+*.pyc
+
+# Runtime data
+src/backend/knowledge_management/llm_wiki_server/data/
+src/backend/knowledge_management/llm_wiki_server/logs/
+src/backend/knowledge_management/llm_wiki_server/sftp_service.pid
+
+# Misc
+AGENTS.md
+.trae/
+test/
+package-lock.json

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720">
+  <rect width="1280" height="720" fill="#FFFFFF"/>
+  <image href="images/cover-explore.png" x="0" y="0" width="1280" height="720" preserveAspectRatio="xMidYMid slice"/>
+  <rect x="0" y="0" width="760" height="720" fill="#FFFFFF" fill-opacity="0.88"/>
+  <image href="images/brand-logo.png" x="64" y="48" width="205" height="45" preserveAspectRatio="xMinYMid meet"/>
+  <rect x="64" y="198" width="10" height="96" fill="#C7000B"/>
+  <text x="102" y="245" fill="#1D1D1B" font-family="Arial, Microsoft YaHei, sans-serif" font-size="48" font-weight="bold">{{TITLE}}</text>
+  <text x="102" y="292" fill="#666666" font-family="Microsoft YaHei, Arial, sans-serif" font-size="24">{{SUBTITLE}}</text>
+  <line x1="64" y1="560" x2="610" y2="560" stroke="#C7000B" stroke-width="3"/>
+  <text x="64" y="606" fill="#1D1D1B" font-family="Microsoft YaHei, Arial, sans-serif" font-size="18">{{AUTHOR}}</text>
+  <text x="64" y="638" fill="#666666" font-family="Microsoft YaHei, Arial, sans-serif" font-size="16">{{DEPARTMENT}}  |  {{DATE}}</text>
+</svg>

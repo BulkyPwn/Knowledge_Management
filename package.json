@@ -1,0 +1,122 @@
+{
+  "name": "ai-desktop-app",
+  "version": "0.1.3",
+  "description": "AI一站式桌面应用",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "node scripts/build-with-timing.js",
+    "build:react": "node --max-old-space-size=8192 node_modules/webpack/bin/webpack.js --mode production",
+    "pip:install": "node scripts/pip-install-smart.js",
+    "python:runtime": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/setup-python-runtime.ps1",
+    "dev": "chcp 65001 >nul 2>&1 && webpack --mode development && electron .",
+    "watch": "webpack --watch",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "build:msi": "node scripts/build-wix-msi.js"
+  },
+  "keywords": [
+    "AI",
+    "desktop",
+    "electron"
+  ],
+  "author": "SSSC",
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/core": "^7.23.9",
+    "@babel/preset-env": "^7.23.9",
+    "@babel/preset-react": "^7.28.5",
+    "@monaco-editor/loader": "^1.7.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "autoprefixer": "^10.4.16",
+    "babel-jest": "^30.3.0",
+    "babel-loader": "^9.1.3",
+    "css-loader": "^6.10.0",
+    "electron": "^28.3.3",
+    "electron-builder": "^24.9.1",
+    "html-webpack-plugin": "^5.6.0",
+    "jest": "^30.3.0",
+    "jest-environment-jsdom": "^30.3.0",
+    "monaco-editor-webpack-plugin": "^7.1.1",
+    "postcss": "^8.4.32",
+    "postcss-loader": "^8.2.1",
+    "style-loader": "^3.3.4",
+    "tailwindcss": "^3.4.14",
+    "webpack": "^5.90.0",
+    "webpack-cli": "^5.1.4",
+    "xterm": "^5.3.0",
+    "xterm-addon-fit": "^0.8.0"
+  },
+  "dependencies": {
+    "@monaco-editor/react": "^4.7.0",
+    "jsdom": "^29.1.1",
+    "lucide-react": "^0.294.0",
+    "mermaid": "^11.15.0",
+    "monaco-editor": "^0.45.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "build": {
+    "appId": "com.aidesktop.app",
+    "productName": "AI_Assistant_Omni",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "build/**/*",
+      "src/config/models.json",
+      "src/config/knowledge_management.json"
+    ],
+    "extraResources": [
+      {
+        "from": "User-Guide.md",
+        "to": "User-Guide.md"
+      },
+      {
+        "from": "src/backend/knowledge_management",
+        "to": "knowledge_management",
+        "filter": [
+          "**/*",
+          "!**/__pycache__/**",
+          "!**/*.pyc",
+          "!**/logs/**",
+          "!**/data/**"
+        ]
+      },
+      {
+        "from": "vendor/python",
+        "to": "vendor/python",
+        "filter": [
+          "**/*",
+          "!**/bin/**",
+          "!**/tests/**",
+          "!**/__pycache__/**",
+          "!**/*.pyc",
+          "!**/*.pyo",
+          "!**/*.pdb",
+          "!**/*.lib",
+          "!**/*.h",
+          "!**/*.hpp",
+          "!**/*.pxd"
+        ]
+      },
+      {
+        "from": "vendor/python-runtime",
+        "to": "vendor/python-runtime",
+        "filter": [
+          "**/*",
+          "!**/__pycache__/**",
+          "!**/*.pyc",
+          "!**/*.pyo",
+          "!**/*.pdb"
+        ]
+      }
+    ],
+    "win": {
+      "target": "dir",
+      "icon": "resources/icon.ico"
+    }
+  }
+}

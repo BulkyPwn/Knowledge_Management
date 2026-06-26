@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720">
+  <rect width="1280" height="720" fill="#FFFFFF"/>
+  <rect x="0" y="0" width="18" height="720" fill="#C7000B"/>
+  <text x="90" y="225" fill="#F0F0F0" font-family="Arial, sans-serif" font-size="190" font-weight="bold">{{CHAPTER_NUM}}</text>
+  <rect x="92" y="292" width="112" height="8" fill="#C7000B"/>
+  <text x="92" y="382" fill="#1D1D1B" font-family="Microsoft YaHei, Arial, sans-serif" font-size="52" font-weight="bold">{{CHAPTER_TITLE}}</text>
+  <text x="94" y="438" fill="#666666" font-family="Microsoft YaHei, Arial, sans-serif" font-size="22">{{CHAPTER_DESC}}</text>
+  <line x1="92" y1="514" x2="1188" y2="514" stroke="#DDDDDD"/>
+  <image href="images/brand-logo-small.png" x="1044" y="642" width="156" height="34" preserveAspectRatio="xMaxYMid meet"/>
+</svg>

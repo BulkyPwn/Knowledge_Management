@@ -1,0 +1,77 @@
+# 知识库问答 Skill（结构化引擎版本）
+# 状态机强制执行：不等 LLM 决定，直接调用工具 → 验证结果 → 生成回答
+
+name: 知识库问答
+version: "1.0"
+type: structured
+description: 基于知识库内容进行深度问答，支持多轮检索和自动重试
+trigger_keywords: ["知识库", "查询", "问答", "查找", "knowledge", "query", "search kb"]
+tools_allowed: [knowledge_query, list_projects]
+max_iterations: 5
+
+steps:
+  # ═══ 步骤 1：主检索 — 用用户输入直接搜 ═══
+  - id: search_primary
+    type: tool_call
+    tool: knowledge_query
+    params:
+      query: "{{user_input}}"
+      top_k: 5
+    validate:
+      condition: "result.count > 0"
+      on_failure: retry_with_alternate
+    retry:
+      max_attempts: 3
+      alternate_params:
+        - {query: "{{user_input}} 核心概念", top_k: 5}
+        - {query: "{{user_input_short}}", top_k: 3}
+
+  # ═══ 步骤 2：补充检索 — 结果少时用更宽泛的关键词 ═══
+  - id: search_supplement
+    type: tool_call
+    tool: knowledge_query
+    params:
+      query: "{{user_input_short}}"
+      top_k: 5
+    condition: "step.search_primary.result.count < 3"
+    validate:
+      condition: "result.count >= 0"
+      on_failure: continue_anyway
+
+  # ═══ 步骤 3：获取项目列表 — 提供上下文 ═══
+  - id: list_context
+    type: tool_call
+    tool: list_projects
+    params: {}
+    validate:
+      condition: "result.count >= 0"
+      on_failure: continue_anyway
+
+  # ═══ 步骤 4：LLM 生成最终回答 ═══
+  - id: generate_answer
+    type: llm_generate
+    instructions: |
+      你是知识库问答助手。基于以下检索结果回答用户问题。
+
+      用户问题：{{user_input}}
+
+      主检索结果（第1次）：
+      {{step_raw.search_primary}}
+
+      补充检索结果（第2次）：
+      {{step_raw.search_supplement}}
+
+      可用项目：
+      {{step_raw.list_context}}
+
+      回答要求：
+      1. 每条事实性结论必须标注来源路径，格式为 [来源: xxx]
+      2. 你自己的推理和补充必须标注 [推理]
+      3. 如果检索结果充分 → 给出详细回答
+      4. 如果检索结果不足 → 如实告知，并建议用户补充资料
+      5. 使用中文回答，结构清晰
+    temperature: 0.3
+    max_tokens: 4096
+    validate:
+      contains: "[来源"
+      min_length: 50

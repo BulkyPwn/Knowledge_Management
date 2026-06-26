@@ -1,0 +1,22 @@
+{
+  "update_time": "2026-06-23T00:00:00Z",
+  "description": "此文件需放置在 SFTP 服务器的 /home/Knowledge_Management/ 目录下，与 LLM_Wiki_x64_en-US.msi 和 chrys.exe 同级。",
+  "tools": {
+    "llm-wiki": {
+      "name": "LLM Wiki",
+      "version": "1.0.0",
+      "installer_sha256": "",
+      "installed_exe_sha256": "",
+      "installer_file": "LLM_Wiki_x64_en-US.msi",
+      "download_url": "https://raw.githubusercontent.com/BulkyPwn/llm_wiki/target/bundle/msi/LLM_Wiki_x64_en-US.msi"
+    },
+    "chrys": {
+      "name": "Chrys",
+      "version": "1.0.0",
+      "installer_sha256": "",
+      "installed_exe_sha256": "",
+      "installer_file": "chrys.exe",
+      "download_url": "https://raw.githubusercontent.com/BulkyPwn/dist/main/chrys.exe"
+    }
+  }
+}
